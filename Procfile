@@ -1,1 +1,1 @@
-worker: node jq
+web: node index.js
