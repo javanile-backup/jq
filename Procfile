@@ -1,1 +1,1 @@
-web: node jq
+worker: node jq
