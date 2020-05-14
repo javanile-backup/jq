@@ -23,10 +23,17 @@ http.createServer((req, res) => {
         , suffix = params.get('@suffix') || ''
         , append = params.get('@append') || ''
         , prepend = params.get('@prepend') || ''
-        , transform = params.get('@transform') |w| '';
 
-    if (params.has('@transform') && typeof transformers[transform]) {
-        require()
+    let transform = function (value) { return value }
+    if (params.has('@transform')) {
+        const transformer = params.get('@transform')
+        const transformers = {
+        }
+        if (typeof transformers[transform] !== 'undefined') {
+            transform = require(transformers[transform])
+        } else {
+            res.end('Invalid @transform function')
+        }
     }
 
     switch (params.get('@prepend')) {
