@@ -10,15 +10,15 @@ const url = require('url')
 
 http.createServer((req, res) => {
     const input = url.parse(req.url, true)
-    const params = new URLSearchParams(input.query)
+        , params = new URLSearchParams(input.query)
 
     if (!params.has('@filter')) {
         return res.end('Missing @filter parameter')
     }
 
     const filter = params.get('@filter')
-    const method = params.get('@method') || 'get'
-    const protocol = params.get('@protocol') || 'https'
+        , method = params.get('@method') || 'get'
+        , protocol = params.get('@protocol') || 'https'
 
     for (let param of params.entries()) {
         if (param[0][0] === '@') {
@@ -26,12 +26,8 @@ http.createServer((req, res) => {
         }
     }
 
-    const logurl = protocol + ':/' + input.pathname + '?' + params
-
-    console.log('U', logurl)
-
     axios.request({
-        url: logurl,
+        url: protocol + ':/' + input.pathname + '?' + params,
         method: method
     }).then((json) => {
         jq.run(filter, json.data, {
