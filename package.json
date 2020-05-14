@@ -18,6 +18,7 @@
   "homepage": "https://github.com/javanile/jq#readme",
   "dependencies": {
     "axios": "^0.19.2",
+    "md5": "^2.2.1",
     "node-jq": "^1.11.1"
   }
 }
