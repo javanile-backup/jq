@@ -24,6 +24,19 @@ http.createServer((req, res) => {
     const filter = params.get('@filter')
         , method = params.get('@method') || 'get'
         , protocol = params.get('@protocol') || 'https'
+        , prefix = params.get('@prefix') || ''
+        , suffix = params.get('@suffix') || ''
+        , append = params.get('@append') || ''
+        , prepend = params.get('@prepend') || ''
+        , transform = params.get('@transform') |w| '';
+
+    if (params.has('@transform') && typeof transformers[transform]) {
+        require()
+    }
+
+    switch (params.get('@prepend')) {
+
+    }
 
     for (let param of params.entries()) {
         if (param[0][0] === '@') {
@@ -39,7 +52,7 @@ http.createServer((req, res) => {
         jq.run(filter, json.data, {
             input: typeof json.data === 'object' ? 'json' : 'string'
         }).then((value)=> {
-            res.end(value);
+            res.end(prefix + transform(prepend + value + append) + suffix);
         }).catch((error) => {
             res.end('jq: ' + error.message)
         })
