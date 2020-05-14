@@ -9,21 +9,17 @@ const url = require('url')
     , isTld = require('is-tld')
     , port = process.env.PORT || 3000
 
-http.createServer((req, res) => {
+module.exports = http.createServer((req, res) => {
     const input = url.parse(req.url, true)
         , params = new URLSearchParams(input.query)
-
-    if (!params.has('@filter')) {
-        return res.end('Missing @filter parameter')
-    }
+        , filter = params.has('@filter') ? params.get('@filter') : '.'
 
     if (!isTld(input.pathname.split('/')[1].split('.').slice(1).pop())) {
         return res.end('Invalid TLD domain request')
     }
 
-    const filter = params.get('@filter')
-        , method = params.get('@method') || 'get'
-        , timeout = params.get('@timeout') || 3000
+    const method = params.get('@method') || 'get'
+        , timeout = params.has('@timeout') ? parseInt(params.get('@timeout')) : 3000
         , protocol = params.get('@protocol') || 'https'
         , prefix = params.get('@prefix') || ''
         , suffix = params.get('@suffix') || ''
@@ -49,20 +45,25 @@ http.createServer((req, res) => {
         }
     }
 
+    const query = params.toString()
+    let lurl = protocol + ':/' + input.pathname + (query ? '?' + query : '');
+    console.log(lurl)
     axios.request({
-        url: protocol + ':/' + input.pathname + '?' + params,
-        timeout: timeout,
+        url: protocol + ':/' + input.pathname + (query ? '?' + query : ''),
+        //timeout: timeout,
         method: method
-    }).then((json) => {
-        jq.run(filter, json.data, {
-            input: typeof json.data === 'object' ? 'json' : 'string'
+    }).then((resp) => {
+        const json = typeof resp.data === 'object' ? JSON.stringify(resp.data) : resp.data
+        jq.run(filter, json, {
+            input: 'string'
         }).then((value)=> {
+            res.writeHead(200, {"Content-Type": "text/html"});
             res.end(prefix + transform(prepend + value + append) + suffix);
         }).catch((error) => {
             res.end('jq: ' + error.message)
         })
     }).catch((error) => {
-        res.end('axios:', error.message)
+        res.end('axios: ' + error.message)
     })
 }).listen(port, () => {
     console.log(`Server listen on port ${port}.`)
