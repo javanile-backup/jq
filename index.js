@@ -23,6 +23,7 @@ http.createServer((req, res) => {
 
     const filter = params.get('@filter')
         , method = params.get('@method') || 'get'
+        , timeout = params.get('@timeout') || 3000
         , protocol = params.get('@protocol') || 'https'
         , prefix = params.get('@prefix') || ''
         , suffix = params.get('@suffix') || ''
@@ -33,16 +34,13 @@ http.createServer((req, res) => {
     if (params.has('@transform')) {
         const transformer = params.get('@transform')
         const transformers = {
+            md5: function(value) { return require('md5')(value) },
         }
-        if (typeof transformers[transform] !== 'undefined') {
-            transform = require(transformers[transform])
+        if (typeof transformers[transformer] !== 'undefined') {
+            transform = transformers[transformer]
         } else {
-            res.end('Invalid @transform function')
+            res.end('Invalid @transform value')
         }
-    }
-
-    switch (params.get('@prepend')) {
-
     }
 
     for (let param of params.entries()) {
@@ -53,7 +51,7 @@ http.createServer((req, res) => {
 
     axios.request({
         url: protocol + ':/' + input.pathname + '?' + params,
-        timeout: clearTimeout()
+        timeout: timeout,
         method: method
     }).then((json) => {
         jq.run(filter, json.data, {
