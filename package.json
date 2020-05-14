@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/javanile/jq/issues"
   },
-  "homepage": "https://github.com/javanile/jq#readme"
+  "homepage": "https://github.com/javanile/jq#readme",
+  "dependencies": {
+    "node-jq": "^1.11.1"
+  }
 }
