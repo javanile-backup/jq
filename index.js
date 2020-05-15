@@ -18,13 +18,16 @@ module.exports = http.createServer((req, res) => {
         return res.end('Invalid TLD domain request')
     }
 
-    const method = params.get('@method') || 'get'
+    const negative = ['0', 'false', 'not', 'no']
+        , method = params.get('@method') || 'get'
         , timeout = params.has('@timeout') ? parseInt(params.get('@timeout')) : 3000
         , protocol = params.get('@protocol') || 'https'
         , prefix = params.get('@prefix') || ''
         , suffix = params.get('@suffix') || ''
         , append = params.get('@append') || ''
         , prepend = params.get('@prepend') || ''
+        , sort = params.has('@sort') && negative.indexOf(params.get('@sort')) === -1
+        , raw = params.has('@raw') && negative.indexOf(params.get('@raw')) === -1
 
     let transform = function (value) { return value }
     if (params.has('@transform')) {
@@ -35,7 +38,7 @@ module.exports = http.createServer((req, res) => {
         if (typeof transformers[transformer] !== 'undefined') {
             transform = transformers[transformer]
         } else {
-            res.end('Invalid @transform value')
+            return res.end('Invalid @transform value')
         }
     }
 
@@ -46,18 +49,19 @@ module.exports = http.createServer((req, res) => {
     }
 
     const query = params.toString()
-    let lurl = protocol + ':/' + input.pathname + (query ? '?' + query : '');
-    console.log(lurl)
     axios.request({
         url: protocol + ':/' + input.pathname + (query ? '?' + query : ''),
-        //timeout: timeout,
+        timeout: timeout,
         method: method
     }).then((resp) => {
         const json = typeof resp.data === 'object' ? JSON.stringify(resp.data) : resp.data
         jq.run(filter, json, {
-            input: 'string'
+            input: 'string',
+            output: 'string',
+            sort: sort,
+            raw: raw,
         }).then((value)=> {
-            res.writeHead(200, {"Content-Type": "text/html"});
+            res.writeHead(200, {"Content-Type": "application/json"});
             res.end(prefix + transform(prepend + value + append) + suffix);
         }).catch((error) => {
             res.end('jq: ' + error.message)
