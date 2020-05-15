@@ -43,6 +43,7 @@ module.exports = http.createServer((req, res) => {
     }
 
     for (let param of params.entries()) {
+        console.log(param[0])
         if (param[0][0] === '@') {
             params.delete(param[0])
         }
@@ -50,8 +51,9 @@ module.exports = http.createServer((req, res) => {
 
     const query = params.toString()
     axios.request({
-        url: protocol + ':/' + input.pathname + (query ? '?' + query : ''),
+        url: protocol + ':/' + input.pathname + (query && method !== 'post' ? '?' + query : ''),
         timeout: timeout,
+        data: method === 'post' ? query : null,
         method: method
     }).then((resp) => {
         const json = typeof resp.data === 'object' ? JSON.stringify(resp.data) : resp.data
