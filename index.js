@@ -17,28 +17,28 @@ module.exports = http.createServer((req, res) => {
     }
 
     const input = url.parse(req.url, true)
-        , params = new URLSearchParams(input.query)
-        , filter = params.has('@filter') ? params.get('@filter') : '.'
+        , options = new URLSearchParams(input.query)
+        , filter = options.has('@filter') ? options.get('@filter') : '.'
 
     if (!isTld(input.pathname.split('/')[1].split('.').slice(1).pop())) {
         return res.writeHead(400).end('{"error":"Invalid TLD domain request"}')
     }
 
     const negative = ['0', 'false', 'not', 'no']
-        , method = params.get('@method') || 'get'
-        , timeout = params.has('@timeout') ? parseInt(params.get('@timeout')) : 3000
-        , protocol = params.get('@protocol') || 'https'
-        , prefix = params.get('@prefix') || ''
-        , suffix = params.get('@suffix') || ''
-        , append = params.get('@append') || ''
-        , prepend = params.get('@prepend') || ''
-        , sort = params.has('@sort') && negative.indexOf(params.get('@sort')) === -1
-        , raw = params.has('@raw') && negative.indexOf(params.get('@raw')) === -1
+        , method = options.get('@method') || 'get'
+        , timeout = options.has('@timeout') ? parseInt(options.get('@timeout')) : 3000
+        , protocol = options.get('@protocol') || 'https'
+        , prefix = options.get('@prefix') || ''
+        , suffix = options.get('@suffix') || ''
+        , append = options.get('@append') || ''
+        , prepend = options.get('@prepend') || ''
+        , sort = options.has('@sort') && negative.indexOf(options.get('@sort')) === -1
+        , raw = options.has('@raw') && negative.indexOf(options.get('@raw')) === -1
 
     let transform = function (value) { return value }
 
-    if (params.has('@transform')) {
-        const transformer = params.get('@transform')
+    if (options.has('@transform')) {
+        const transformer = options.get('@transform')
         if (transformer) {
             const transformers = {
                 md5: function(value) { return require('md5')(value) },
@@ -51,31 +51,28 @@ module.exports = http.createServer((req, res) => {
         }
     }
 
-    for (let param of params.entries()) {
-        if (param[0][0] === '@') {
-            params.delete(param[0])
-        }
-    }
-
     const request = {
+        url: protocol + ':/' + input.pathname,
         method: method,
         timeout: timeout
     }
 
-    if (method === 'post') {
-        const data = new URLSearchParams()
-        for (let param of params.entries()) {
-            if (param[0].substr(0, 5) === 'data:') {
-                data.append(param[0].substring(5), param[1])
-                params.delete(param[0])
-            }
+    const data = new URLSearchParams()
+    const params = new URLSearchParams()
+
+    for (let option of options.entries()) {
+        if (option[0].substr(0, 5) === 'data:') {
+            data.append(option[0].substring(5), option[1])
+        } else if (option[0][0] !== '@') {
+            params.append(option[0], option[1])
         }
-        request.data = data.toString()
     }
 
-    const query = params.toString()
+    const body = data.toString()
+    if (body) { request.data = body }
 
-    request.url = protocol + ':/' + input.pathname + (query ? '?' + query : ''),
+    const query = params.toString()
+    if (query) { request.url += '?' + query }
 
     console.log(request)
 
