@@ -24,7 +24,9 @@
   "homepage": "https://github.com/javanile/jq#readme",
   "dependencies": {
     "axios": "^0.19.2",
+    "bluebird": "^3.7.2",
     "is-tld": "^1.0.2",
+    "json-2-csv": "^3.7.0",
     "md5": "^2.2.1",
     "node-jq": "^1.11.1"
   },

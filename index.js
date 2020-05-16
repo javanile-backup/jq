@@ -35,13 +35,14 @@ module.exports = http.createServer((req, res) => {
         , sort = options.has('@sort') && negative.indexOf(options.get('@sort')) === -1
         , raw = options.has('@raw') && negative.indexOf(options.get('@raw')) === -1
 
-    let transform = function (value) { return value }
+    let transform = function (value, cb) { cb(null, value) }
 
     if (options.has('@transform')) {
         const transformer = options.get('@transform')
         if (transformer) {
             const transformers = {
-                md5: function(value) { return require('md5')(value) },
+                md5: function(value, cb) { cb(null, require('md5')(value)) },
+                csv: function(value, cb) { require('json-2-csv').json2csv(JSON.parse(value), cb) }
             }
             if (typeof transformers[transformer] !== 'undefined') {
                 transform = transformers[transformer]
@@ -74,8 +75,6 @@ module.exports = http.createServer((req, res) => {
     const query = params.toString()
     if (query) { request.url += '?' + query }
 
-    console.log(request)
-
     axios.request(request).then((resp) => {
         const json = typeof resp.data === 'object' ? JSON.stringify(resp.data) : resp.data
         jq.run(filter, json, {
@@ -84,7 +83,9 @@ module.exports = http.createServer((req, res) => {
             sort: sort,
             raw: raw,
         }).then((value)=> {
-            res.writeHead(200).end(prefix + transform(prepend + value + append) + suffix);
+            transform(prepend + value + append, (error, value) => {
+                res.writeHead(200).end(prefix + value + suffix);
+            })
         }).catch((error) => {
             res.writeHead(500).end('jq: ' + error.message)
         })
