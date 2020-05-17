@@ -34,6 +34,7 @@ module.exports = http.createServer((req, res) => {
         , prepend = options.get('@prepend') || ''
         , sort = options.has('@sort') && negative.indexOf(options.get('@sort')) === -1
         , raw = options.has('@raw') && negative.indexOf(options.get('@raw')) === -1
+        , fields = options.has('@fields') ? options.get('@fields').split(',').map(s => s.trim()) : null
 
     let transform = function (value, cb) { cb(null, value) }
 
@@ -83,6 +84,13 @@ module.exports = http.createServer((req, res) => {
             sort: sort,
             raw: raw,
         }).then((value)=> {
+            if (fields) {
+                value = JSON.stringify(require('traverse')(JSON.parse(value)).map(function(){
+                    if (this.key && !this.key.match(/^[0-9]+$/) && fields.indexOf(this.key) === -1) {
+                        this.delete()
+                    }
+                }))
+            }
             transform(prepend + value + append, (error, value) => {
                 res.writeHead(200).end(prefix + value + suffix);
             })

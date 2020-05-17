@@ -28,7 +28,8 @@
     "is-tld": "^1.0.2",
     "json-2-csv": "^3.7.0",
     "md5": "^2.2.1",
-    "node-jq": "^1.11.1"
+    "node-jq": "^1.11.1",
+    "traverse": "^0.6.6"
   },
   "devDependencies": {
     "jest": "^24.9.0",
