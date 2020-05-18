@@ -41,18 +41,13 @@ module.exports = http.createServer((req, res) => {
     if (options.has('@traverse')) {
         const traverser = options.get('@traverse')
         if (traverser) {
-            const traversers = {
-                '^\/(.*)\/([gi]*)$': function (value, cb) {
+            if (/^\/.*\/[gi]*$/.test(traverser))
+                const regex = traverser.match(/^\/(.*)\/([gi]*)$/)
+                traverse = function (value, cb) {
                     cb(null, JSON.stringify(JSON.parse(value), function (key, val) {
                         return !key || key.match(new RegExp(regex[1].replace(/ /g, '+'), regex[2])) ? val : undefined
                     }))
                 }
-            }
-            for (let regex in traversers) {
-                if ()
-            }
-            if (typeof traversers[traverser[0]] !== 'undefined') {
-                traverse = traversers[traverser[0]]
             } else {
                 return res.writeHead(422).end('Invalid @traverse value')
             }
