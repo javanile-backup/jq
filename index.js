@@ -9,7 +9,7 @@ const url = require('url')
     , isTld = require('is-tld')
     , md5 = require('md5')
     , json2csv = require('json-2-csv').json2csv
-    , traverse = require('traverse')
+    , traverser = require('traverse')
     , port = process.env.PORT || 3000
 
 module.exports = http.createServer((req, res) => {
@@ -91,6 +91,7 @@ module.exports = http.createServer((req, res) => {
             sort: sort,
             raw: raw,
         }).then((value)=> {
+            /*
             if (fields) {
                 value = JSON.stringify((JSON.parse(value)).map(function(){
                     if (this.key && !this.key.match(/^[0-9]+$/) && fields.indexOf(this.key) === -1) {
@@ -98,6 +99,7 @@ module.exports = http.createServer((req, res) => {
                     }
                 }))
             }
+             */
             transform(prepend + value + append, (error, value) => {
                 res.writeHead(200).end(prefix + value + suffix);
             })
