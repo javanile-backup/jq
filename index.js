@@ -38,25 +38,25 @@ module.exports = http.createServer((req, res) => {
         , raw = options.has('@raw') && negative.indexOf(options.get('@raw')) === -1
 
     let traverse = function (value, cb) { cb(null, value) }
-    if (options.has('@traverse')) {
-        const traverser = options.get('@traverse')
+    if (options.has('@traverser')) {
+        const traverser = options.get('@traverser')
         if (traverser) {
-            if (/^\/.*\/[gi]*$/.test(traverser))
-                const regex = traverser.match(/^\/(.*)\/([gi]*)$/)
+            let regex = traverser.match(/^\/(.*?)\/([gi]*)$/)
+            if (regex) {
                 traverse = function (value, cb) {
                     cb(null, JSON.stringify(JSON.parse(value), function (key, val) {
                         return !key || key.match(new RegExp(regex[1].replace(/ /g, '+'), regex[2])) ? val : undefined
                     }))
                 }
             } else {
-                return res.writeHead(422).end('Invalid @traverse value')
+                return res.writeHead(422).end('Invalid @traverser value')
             }
         }
     }
 
     let transform = function (value, cb) { cb(null, value) }
-    if (options.has('@transform')) {
-        const transformer = options.get('@transform')
+    if (options.has('@transformer')) {
+        const transformer = options.get('@transformer')
         if (transformer) {
             const transformers = {
                 md5: function(value, cb) { cb(null, md5(value)) },
@@ -107,10 +107,8 @@ module.exports = http.createServer((req, res) => {
             raw: raw,
         }).then((value) => {
             try {
-                traverse(value, (error, value) => {
-                    transform(prepend + value + append, (error, value) => {
-                        res.writeHead(200).end(prefix + value + suffix);
-                    })
+                traverse(prepend + value + append, (error, value) => {
+                    transform(value, (error, value) => res.writeHead(200).end(prefix + value + suffix))
                 })
             } catch (error) {
                 res.writeHead(500).end('error: ' + error.message)
