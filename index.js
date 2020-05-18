@@ -9,7 +9,6 @@ const url = require('url')
     , isTld = require('is-tld')
     , md5 = require('md5')
     , json2csv = require('json-2-csv').json2csv
-    , traverser = require('traverse')
     , port = process.env.PORT || 3000
 
 module.exports = http.createServer((req, res) => {
@@ -90,16 +89,13 @@ module.exports = http.createServer((req, res) => {
             output: 'string',
             sort: sort,
             raw: raw,
-        }).then((value)=> {
-            /*
-            if (fields) {
-                value = JSON.stringify((JSON.parse(value)).map(function(){
-                    if (this.key && !this.key.match(/^[0-9]+$/) && fields.indexOf(this.key) === -1) {
-                        this.delete()
-                    }
-                }))
+        }).then((value) => {
+            if (options.has('@traverse')) {
+                const regex = new RegExp(options.get('@traverse').replace(/ /g, '+'))
+                value = JSON.stringify(JSON.parse(value.toString()), function (key, val) {
+                    return !key || key.match(regex) ? val : undefined
+                })
             }
-             */
             transform(prepend + value + append, (error, value) => {
                 res.writeHead(200).end(prefix + value + suffix);
             })
