@@ -65,7 +65,7 @@ module.exports = http.createServer((req, res) => {
             if (typeof transformers[transformer] !== 'undefined') {
                 transform = transformers[transformer]
             } else {
-                return res.writeHead(422).end('Invalid @transform value')
+                return res.writeHead(422).end('Invalid @transformer value')
             }
         }
     }
