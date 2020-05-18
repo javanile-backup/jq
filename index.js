@@ -92,9 +92,7 @@ module.exports = http.createServer((req, res) => {
         }).then((value) => {
             if (options.has('@traverse')) {
                 const regex = new RegExp(options.get('@traverse').replace(/ /g, '+'))
-                value = JSON.stringify(JSON.parse(value.toString()), function (key, val) {
-                    return !key || key.match(regex) ? val : undefined
-                })
+                value = JSON.stringify(JSON.parse(value + ''), (key, val) => !key || key.match(regex) ? val : null)
             }
             transform(prepend + value + append, (error, value) => {
                 res.writeHead(200).end(prefix + value + suffix);
