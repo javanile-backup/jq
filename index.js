@@ -37,14 +37,35 @@ module.exports = http.createServer((req, res) => {
         , sort = options.has('@sort') && negative.indexOf(options.get('@sort')) === -1
         , raw = options.has('@raw') && negative.indexOf(options.get('@raw')) === -1
 
-    let transform = function (value, cb) { cb(null, value) }
+    let traverse = function (value, cb) { cb(null, value) }
+    if (options.has('@traverse')) {
+        const traverser = options.get('@traverse')
+        if (traverser) {
+            const traversers = {
+                '^\/(.*)\/([gi]*)$': function (value, cb) {
+                    cb(null, JSON.stringify(JSON.parse(value), function (key, val) {
+                        return !key || key.match(new RegExp(regex[1].replace(/ /g, '+'), regex[2])) ? val : undefined
+                    }))
+                }
+            }
+            for (let regex in traversers) {
+                if ()
+            }
+            if (typeof traversers[traverser[0]] !== 'undefined') {
+                traverse = traversers[traverser[0]]
+            } else {
+                return res.writeHead(422).end('Invalid @traverse value')
+            }
+        }
+    }
 
+    let transform = function (value, cb) { cb(null, value) }
     if (options.has('@transform')) {
         const transformer = options.get('@transform')
         if (transformer) {
             const transformers = {
                 md5: function(value, cb) { cb(null, md5(value)) },
-                csv: function(value, cb) { json2csv(JSON.parse(value), cb) }
+                csv: function(value, cb) { json2csv(JSON.parse(value).filter((row) => row), cb) }
             }
             if (typeof transformers[transformer] !== 'undefined') {
                 transform = transformers[transformer]
@@ -90,13 +111,15 @@ module.exports = http.createServer((req, res) => {
             sort: sort,
             raw: raw,
         }).then((value) => {
-            if (options.has('@traverse')) {
-                const regex = new RegExp(options.get('@traverse').replace(/ /g, '+'))
-                value = JSON.stringify(JSON.parse(value + ''), (key, val) => !key || key.match(regex) ? val : null)
+            try {
+                traverse(value, (error, value) => {
+                    transform(prepend + value + append, (error, value) => {
+                        res.writeHead(200).end(prefix + value + suffix);
+                    })
+                })
+            } catch (error) {
+                res.writeHead(500).end('error: ' + error.message)
             }
-            transform(prepend + value + append, (error, value) => {
-                res.writeHead(200).end(prefix + value + suffix);
-            })
         }).catch((error) => {
             res.writeHead(500).end('jq: ' + error.message)
         })
