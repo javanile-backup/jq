@@ -24,7 +24,8 @@ module.exports = http.createServer((req, res) => {
         return res.writeHead(400).end('{"error":"Invalid TLD domain request"}')
     }
 
-    const options = new URLSearchParams(input.query)
+    const negative = ['0', 'false', 'not', 'no']
+        , options = new URLSearchParams(input.query)
         , filter = options.has('@filter') ? options.get('@filter') : '.'
         , method = options.get('@method') || 'get'
         , timeout = options.has('@timeout') ? parseInt(options.get('@timeout')) : 3000
@@ -35,7 +36,6 @@ module.exports = http.createServer((req, res) => {
         , prepend = options.get('@prepend') || ''
         , sort = options.has('@sort') && negative.indexOf(options.get('@sort')) === -1
         , raw = options.has('@raw') && negative.indexOf(options.get('@raw')) === -1
-        , negative = ['0', 'false', 'not', 'no']
 
     let traverse = function (value, cb) { cb(null, value) }
     if (options.has('@traverser')) {
@@ -49,7 +49,8 @@ module.exports = http.createServer((req, res) => {
                     }))
                 }
             } else {
-                return res.writeHead(400).end('{"event":"error","message":"Invalid @traverser value"}')
+                // @TODO: Detect UserAgent and than make HTTP STATUS custom for Google Spreadsheet
+                return res.writeHead(200).end('{"status":"error","message":"Invalid @traverser value"}')
             }
         }
     }
@@ -98,9 +99,7 @@ module.exports = http.createServer((req, res) => {
 
     if (headers) { request.headers = headers }
 
-    console.log(request.url)
     axios.request(request).then((resp) => {
-        console.log(resp.status)
         const json = typeof resp.data === 'object' ? JSON.stringify(resp.data) : resp.data
         jq.run(filter, json, {
             input: 'string',
@@ -113,18 +112,16 @@ module.exports = http.createServer((req, res) => {
                     transform(value, (error, value) => res.writeHead(200).end(prefix + value + suffix))
                 })
             } catch (error) {
-                res.writeHead(500).end('error: ' + error.message)
+                // @TODO: Detect UserAgent and than make HTTP STATUS custom for Google Spreadsheet
+                res.writeHead(200).end(JSON.stringify({ status: 'error', message: error.message }))
             }
         }).catch((error) => {
-            res.writeHead(500).end('jq: ' + error.message)
+            // @TODO: Detect UserAgent and than make HTTP STATUS custom for Google Spreadsheet
+            res.writeHead(200).end(JSON.stringify({ status: 'error', message: error.message }))
         })
     }).catch((error) => {
-        console.log(error.message);
-        if (typeof error.response != 'undefined' && typeof error.response.status != 'undefined' && error.response.status == 404) {
-            res.writeHead(204).end('Page not found')
-        } else {
-            res.writeHead(500).end('axios: ' + error.message)
-        }
+        // @TODO: Detect UserAgent and than make HTTP STATUS custom for Google Spreadsheet
+        res.writeHead(200).end(JSON.stringify({ status: 'error', message: error.message }))
     })
 }).listen(port, () => {
     console.log(`Server listen on port ${port}.`)
