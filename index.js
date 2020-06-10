@@ -99,6 +99,8 @@ module.exports = http.createServer((req, res) => {
     if (headers) { request.headers = headers }
 
     axios.request(request).then((resp) => {
+        console.log(resp);
+
         const json = typeof resp.data === 'object' ? JSON.stringify(resp.data) : resp.data
         jq.run(filter, json, {
             input: 'string',
@@ -117,7 +119,12 @@ module.exports = http.createServer((req, res) => {
             res.writeHead(500).end('jq: ' + error.message)
         })
     }).catch((error) => {
-        res.writeHead(500).end('axios: ' + error.message)
+        console.log(error.response.status);
+        if (typeof error.response.status != 'undefined' && error.response.status == 404) {
+            res.writeHead(404).end('axios: ' + error.message)
+        } else {
+            res.writeHead(500).end('axios: ' + error.message)
+        }
     })
 }).listen(port, () => {
     console.log(`Server listen on port ${port}.`)
