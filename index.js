@@ -119,9 +119,9 @@ module.exports = http.createServer((req, res) => {
             res.writeHead(500).end('jq: ' + error.message)
         })
     }).catch((error) => {
-        console.log(error.response.status);
+        //console.log(error.response.status);
         if (typeof error.response.status != 'undefined' && error.response.status == 404) {
-            res.writeHead(404).end('axios: ' + error.message)
+            res.writeHead(204).end('Page not found')
         } else {
             res.writeHead(500).end('axios: ' + error.message)
         }

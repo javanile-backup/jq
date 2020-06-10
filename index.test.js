@@ -39,7 +39,7 @@ describe('Security test', () => {
     */
     it('Test page not found error', async () => {
         const res = await request(server)['get']('/httpstat.us/404').buffer(true).parse(disableJsonParse);
-        expect(res.statusCode).toEqual(404)
+        expect(res.statusCode).toEqual(204)
     })
     /*
     it('Test permitted methods', async () => {
