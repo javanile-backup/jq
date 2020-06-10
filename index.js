@@ -49,7 +49,7 @@ module.exports = http.createServer((req, res) => {
                     }))
                 }
             } else {
-                return res.writeHead(200).end('{"event":"error","message":"Invalid @traverser value"}')
+                return res.writeHead(400).end('{"event":"error","message":"Invalid @traverser value"}')
             }
         }
     }
