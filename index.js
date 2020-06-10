@@ -10,7 +10,6 @@ const url = require('url')
     , md5 = require('md5')
     , json2csv = require('json-2-csv').json2csv
     , port = process.env.PORT || 3000
-    , errors = []
 
 module.exports = http.createServer((req, res) => {
     res.setHeader('Content-Type', 'application/json');
@@ -50,7 +49,7 @@ module.exports = http.createServer((req, res) => {
                     }))
                 }
             } else {
-                return res.writeHead(200).end(errors.push({error: 'Invalid @traverser value'}))
+                return res.writeHead(200).end('{"event":"error","message":"Invalid @traverser value"}')
             }
         }
     }
