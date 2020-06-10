@@ -38,7 +38,7 @@ describe('Security test', () => {
     })
     */
     it('Test page not found error', async () => {
-        const res = await request(server)['get']('/httpstat.us/404').buffer(true).parse(disableJsonParse);
+        const res = await request(server)['get']('/code.vtiger.com/api/v2').buffer(true).parse(disableJsonParse);
         expect(res.statusCode).toEqual(204)
     })
     /*

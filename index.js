@@ -10,6 +10,7 @@ const url = require('url')
     , md5 = require('md5')
     , json2csv = require('json-2-csv').json2csv
     , port = process.env.PORT || 3000
+    , errors = []
 
 module.exports = http.createServer((req, res) => {
     res.setHeader('Content-Type', 'application/json');
@@ -19,14 +20,13 @@ module.exports = http.createServer((req, res) => {
     }
 
     const input = url.parse(req.url, true)
-        , options = new URLSearchParams(input.query)
-        , filter = options.has('@filter') ? options.get('@filter') : '.'
 
     if (!isTld(input.pathname.split('/')[1].split('.').slice(1).pop())) {
         return res.writeHead(400).end('{"error":"Invalid TLD domain request"}')
     }
 
-    const negative = ['0', 'false', 'not', 'no']
+    const options = new URLSearchParams(input.query)
+        , filter = options.has('@filter') ? options.get('@filter') : '.'
         , method = options.get('@method') || 'get'
         , timeout = options.has('@timeout') ? parseInt(options.get('@timeout')) : 3000
         , protocol = options.get('@protocol') || 'https'
@@ -36,6 +36,7 @@ module.exports = http.createServer((req, res) => {
         , prepend = options.get('@prepend') || ''
         , sort = options.has('@sort') && negative.indexOf(options.get('@sort')) === -1
         , raw = options.has('@raw') && negative.indexOf(options.get('@raw')) === -1
+        , negative = ['0', 'false', 'not', 'no']
 
     let traverse = function (value, cb) { cb(null, value) }
     if (options.has('@traverser')) {
@@ -49,7 +50,7 @@ module.exports = http.createServer((req, res) => {
                     }))
                 }
             } else {
-                return res.writeHead(422).end('Invalid @traverser value')
+                return res.writeHead(200).end(errors.push({error: 'Invalid @traverser value'}))
             }
         }
     }
@@ -98,9 +99,9 @@ module.exports = http.createServer((req, res) => {
 
     if (headers) { request.headers = headers }
 
+    console.log(request.url)
     axios.request(request).then((resp) => {
-        console.log(resp);
-
+        console.log(resp.status)
         const json = typeof resp.data === 'object' ? JSON.stringify(resp.data) : resp.data
         jq.run(filter, json, {
             input: 'string',
@@ -119,8 +120,8 @@ module.exports = http.createServer((req, res) => {
             res.writeHead(500).end('jq: ' + error.message)
         })
     }).catch((error) => {
-        //console.log(error.response.status);
-        if (typeof error.response.status != 'undefined' && error.response.status == 404) {
+        console.log(error.message);
+        if (typeof error.response != 'undefined' && typeof error.response.status != 'undefined' && error.response.status == 404) {
             res.writeHead(204).end('Page not found')
         } else {
             res.writeHead(500).end('axios: ' + error.message)
